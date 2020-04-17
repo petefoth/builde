@@ -1,11 +1,23 @@
 #!/bin/bash
+clear
+while true; do
+	read -p "When you flash the ROM be aware that lock screen and fingerprint can be removed easily, to prevent this encrypt your phone. Check community.e.foundation if your model supports encryption. I understand this message and want to coninue:(y/n)" yn
+    case $yn in
+          [Yy]* ) break;; 
+	  [Nn]* ) exit;;
+        * ) echo "Please answer yes or no.";;
+    esac
+done
+
 # Install build dependencies
 ############################
 apt -qq update
 apt -qqy upgrade
 apt install -y imagemagick libwxgtk3.0-dev openjdk-8-jdk
 apt install -y openjdk-7-jdk
-apt install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick libncurses5 lib32ncurses5-dev lib32readline-dev lib32z1-dev liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python git
+apt install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick libncurses5 lib32ncurses5-dev lib32readline-dev lib32z1-dev libtinfo5 liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python python3 software-properties-common git
+
+ln -fs /usr/bin/python3 /usr/bin/python
 
 #install google repo
 ####################
@@ -16,9 +28,9 @@ chmod a+x ~/bin/repo
 
 # Environment variables
 #######################
-export MIRROR_DIR=/srv/mirror
-export SRC_DIR=/srv/src
 export TMP_DIR=/srv/tmp
+
+export SRC_DIR=/srv/src
 export CCACHE_DIR=/srv/ccache
 export ZIP_DIR=/srv/zips
 export LMANIFEST_DIR=/srv/local_manifests
@@ -26,6 +38,7 @@ export DELTA_DIR=/srv/delta
 export KEYS_DIR=/srv/keys
 export LOGS_DIR=/srv/logs
 export USERSCRIPTS_DIR=/srv/userscripts
+
 export DEBIAN_FRONTEND=noninteractive
 export USER=root
 
@@ -48,15 +61,15 @@ export CLEAN_OUTDIR=false
 
 # Include proprietary files, downloaded automatically from github.com/TheMuppets/
 # Only some branches are supported
-export INCLUDE_PROPRIETARY=true
+export INCLUDE_PROPRIETARY=false
 
 # Environment for the LineageOS branches name
 # See https://github.com/LineageOS/android_vendor_cm/branches for possible options
-export BRANCH_NAME='v1-oreo'
+export BRANCH_NAME='v1-pie'
 
-# Environment for the device list (separate by comma if more than one)
-# eg. DEVICE_LIST=hammerhead,bullhead,angler
-export DEVICE_LIST='s2'
+# Environment for the device
+# eg. DEVICE=hammerhead
+export DEVICE='s2'
 
 # Release type string
 export RELEASE_TYPE='UNOFFICIAL'
@@ -72,28 +85,19 @@ export MIRROR=''
 export OTA_URL=''
 
 # User identity
-export USER_NAME='user'
-export USER_MAIL='user@email.edu'
-
-# Mount an overlay filesystem over the source dir to do each build on a clean source
-export BUILD_OVERLAY=false
-
-# Clone the full LineageOS mirror (> 200 GB)
-export LOCAL_MIRROR=false
+export USER_NAME='/e/ unofficial'
+export USER_MAIL='erobot@e.email'
 
 # Change this cron rule to what fits best for you
 # Use 'now' to start the build immediately
 # For example, '0 10 * * *' means 'Every day at 10:00 UTC'
 export CRONTAB_TIME='now'
 
-# Provide root capabilities builtin inside the ROM (see http://lineageos.org/Update-and-Build-Prep/)
-export WITH_SU=false
-
 # Provide a default JACK configuration in order to avoid out-of-memory issues
 export ANDROID_JACK_VM_ARGS="-Dfile.encoding=UTF-8 -XX:+TieredCompilation -Xmx4G"
 
 # Custom packages to be installed
-export CUSTOM_PACKAGES='MuPDF GmsCore GsfProxy FakeStore com.google.android.maps.jar Mail BlissLauncher BlissIconPack MozillaNlpBackend OpenWeatherMapWeatherProvider AccountManager MagicEarth OpenCamera eDrive Weather Notes Tasks NominatimNlpBackend Light DroidGuard OpenKeychain Message Browser BrowserWebView Apps LibreOfficeViewer'
+export CUSTOM_PACKAGES='PdfViewer GmsCore GsfProxy FakeStore com.google.android.maps.jar Mail BlissLauncher BlissIconPack MozillaNlpBackend OpenWeatherMapWeatherProvider AccountManager MagicEarth Camera eDrive Weather Notes Tasks NominatimNlpBackend DroidGuard OpenKeychain Message Browser BrowserWebView Apps LibreOfficeViewer'
 
 # Sign the builds with the keys in $KEYS_DIR
 export SIGN_BUILDS=false
@@ -107,19 +111,11 @@ export ZIP_SUBDIR=true
 # Write the verbose logs to $LOGS_DIR/$codename instead of $LOGS_DIR/
 export LOGS_SUBDIR=true
 
-# Apply the MicroG's signature spoofing patch
-# Valid values are "no", "yes" (for the original MicroG's patch) and
-# "restricted" (to grant the permission only to the system privileged apps).
-#
-# The original ("yes") patch allows user apps to gain the ability to spoof
-# themselves as other apps, which can be a major security threat. Using the
-# restricted patch and embedding the apps that requires it as system privileged
-# apps is a much secure option. See the README.md ("Custom mode") for an
-# example.
-export SIGNATURE_SPOOFING="restricted"
-
 # Generate delta files
 export BUILD_DELTA=false
+
+# Backup the .img in addition to zips
+export BACKUP_IMG=false
 
 # Delete old zips in $ZIP_DIR, keep only the N latest one (0 to disable)
 export DELETE_OLD_ZIPS=0
@@ -147,9 +143,9 @@ export OPENDELTA_BUILDS_JSON=''
 
 # Create missing directories
 ############################
-mkdir -p $MIRROR_DIR
-mkdir -p $SRC_DIR
 mkdir -p $TMP_DIR
+
+mkdir -p $SRC_DIR
 mkdir -p $CCACHE_DIR
 mkdir -p $ZIP_DIR
 mkdir -p $LMANIFEST_DIR
@@ -161,15 +157,15 @@ mkdir -p $USERSCRIPTS_DIR
 # Copy build files to  /root/
 ############################
 rm -rf $TMP_DIR/buildscripts
+git clone https://gitlab.e.foundation/e/os/docker-lineage-cicd.git $TMP_DIR/buildscripts
 
-if [ "$1" = "--nosync" ]; then
-   git clone https://github.com/picomatic/docker-lineage-cicd.git $TMP_DIR/buildscripts
-else 
-   git clone https://gitlab.e.foundation/e/os/docker-lineage-cicd.git $TMP_DIR/buildscripts
-fi
-
+rm -rf /root/*
 cp -rf $TMP_DIR/buildscripts/src/* /root/
+
+# Install build dependencies
+############################
 cp $TMP_DIR/buildscripts/apt_preferences /etc/apt/preferences
+
 # Download and build delta tools
 ################################
 cd /root/ && \
@@ -202,3 +198,4 @@ ln -sf /proc/1/fd/1 /var/log/docker.log
 /root/init.sh
 
 #end script
+
