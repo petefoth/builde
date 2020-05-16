@@ -171,7 +171,7 @@ cp $TMP_DIR/buildscripts/apt_preferences /etc/apt/preferences
 cd /root/ && \
         mkdir delta && \
         echo "cloning"
-        git clone --depth=1 https://github.com/omnirom/android_packages_apps_OpenDelta.git OpenDelta && \
+        git clone --depth=1 https://gitlab.e.foundation/e/os/android_packages_apps_OpenDelta.git OpenDelta && \
         gcc -o delta/zipadjust OpenDelta/jni/zipadjust.c OpenDelta/jni/zipadjust_run.c -lz && \
         cp OpenDelta/server/minsignapk.jar OpenDelta/server/opendelta.sh delta/ && \
         chmod +x delta/opendelta.sh && \
