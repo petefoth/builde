@@ -69,7 +69,7 @@ export BRANCH_NAME='v1-pie'
 
 # Environment for the device
 # eg. DEVICE=hammerhead
-export DEVICE='s2'
+export DEVICE_LIST='s2'
 
 # Release type string
 export RELEASE_TYPE='UNOFFICIAL'
@@ -161,6 +161,7 @@ git clone https://gitlab.e.foundation/e/os/docker-lineage-cicd.git $TMP_DIR/buil
 
 rm -rf /root/*
 cp -rf $TMP_DIR/buildscripts/src/* /root/
+cp -rf $TMP_DIR/buildscripts/build-community.sh /root/build.sh
 
 # Install build dependencies
 ############################
