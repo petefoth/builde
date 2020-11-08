@@ -17,8 +17,6 @@ apt install -y imagemagick libwxgtk3.0-dev openjdk-8-jdk
 apt install -y openjdk-7-jdk
 apt install -y bc bison build-essential ccache curl flex g++-multilib gcc-multilib git gnupg gperf imagemagick libncurses5 lib32ncurses5-dev lib32readline-dev lib32z1-dev libtinfo5 liblz4-tool libncurses5-dev libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lzop pngcrush rsync schedtool squashfs-tools xsltproc zip zlib1g-dev python python3 software-properties-common git
 
-ln -fs /usr/bin/python3 /usr/bin/python
-
 #install google repo
 ####################
 mkdir ~/bin 2>/dev/null
@@ -65,28 +63,30 @@ export INCLUDE_PROPRIETARY=false
 
 # Environment for the LineageOS branches name
 # See https://github.com/LineageOS/android_vendor_cm/branches for possible options
-export BRANCH_NAME='v1-pie'
+#
+export BRANCH_NAME='v0.12.3-pie'
 
 # Environment for the device
 # eg. DEVICE=hammerhead
-export DEVICE='s2'
+export DEVICE_LIST='FP3'
 
 # Release type string
 export RELEASE_TYPE='UNOFFICIAL'
+#export LLVM_ENABLE_THREADS=1
 
 # Repo use for build
-export REPO='https://gitlab.e.foundation/e/os/android.git'
+export REPO='https://gitlab.e.foundation/e/os/releases.git'
 
 # Repo use for build
 export MIRROR=''
 
 # OTA URL that will be used inside CMUpdater
 # Use this in combination with LineageOTA to make sure your device can auto-update itself from this buildbot
-export OTA_URL=''
+export OTA_URL='https://your-ota-server.com/api'
 
 # User identity
-export USER_NAME='/e/ unofficial'
-export USER_MAIL='erobot@e.email'
+export USER_NAME='anonymous'
+export USER_MAIL='anonymous@xyz.com'
 
 # Change this cron rule to what fits best for you
 # Use 'now' to start the build immediately
@@ -161,6 +161,7 @@ git clone https://gitlab.e.foundation/e/os/docker-lineage-cicd.git $TMP_DIR/buil
 
 rm -rf /root/*
 cp -rf $TMP_DIR/buildscripts/src/* /root/
+cp -rf $TMP_DIR/buildscripts/build-community.sh /root/build.sh
 
 # Install build dependencies
 ############################
@@ -171,7 +172,7 @@ cp $TMP_DIR/buildscripts/apt_preferences /etc/apt/preferences
 cd /root/ && \
         mkdir delta && \
         echo "cloning"
-        git clone --depth=1 https://github.com/omnirom/android_packages_apps_OpenDelta.git OpenDelta && \
+        git clone --depth=1 https://gitlab.e.foundation/e/os/android_packages_apps_OpenDelta.git OpenDelta && \
         gcc -o delta/zipadjust OpenDelta/jni/zipadjust.c OpenDelta/jni/zipadjust_run.c -lz && \
         cp OpenDelta/server/minsignapk.jar OpenDelta/server/opendelta.sh delta/ && \
         chmod +x delta/opendelta.sh && \
